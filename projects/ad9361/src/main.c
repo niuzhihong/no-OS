@@ -56,6 +56,7 @@
 #include "dac_core.h"
 #endif
 #ifdef USE_LIBIIO
+#include "serial.h"
 #include "tinyiiod.h"
 #include "tinyiiod_user.h"
 #endif

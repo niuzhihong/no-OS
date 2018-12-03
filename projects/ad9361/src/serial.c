@@ -82,7 +82,7 @@
 /************************** Function Prototypes *****************************/
 
 int UartPsIntrExample(INTC *IntcInstPtr, XUartPs *UartInstPtr,
-			u16 DeviceId, u16 UartIntrId);
+		      u16 DeviceId, u16 UartIntrId);
 
 
 static int SetupInterruptSystem(INTC *IntcInstancePtr,
@@ -97,7 +97,8 @@ void Handler(void *CallBackRef, u32 Event, unsigned int EventData);
 XUartPs UartPs	;		/* Instance of the UART Device */
 INTC InterruptController;	/* Instance of the Interrupt Controller */
 
-static volatile bool bytes_received_timeout = false; /* is set in XUARTPS_EVENT_RECV_TOUT timeout interrupt, this way we know when a chunk of data ended */
+static volatile bool bytes_received_timeout =
+	false; /* is set in XUARTPS_EVENT_RECV_TOUT timeout interrupt, this way we know when a chunk of data ended */
 /*
  * The following counters are used to determine when the entire buffer has
  * been sent and received.
@@ -111,7 +112,8 @@ static char buffer[BUFFERL_LENGTH];
 static char *pnext = buffer;
 static char *pcurr = buffer;
 
-int serial_read_line(char *buf) {
+int serial_read_line(char *buf)
+{
 	if(pcurr == buffer) { // trigger a new receive
 		XUartPs_Recv(&UartPs, (u8*)pcurr, BUFFERL_LENGTH);
 		do {
@@ -127,11 +129,11 @@ int serial_read_line(char *buf) {
 	}
 	int cmd_length = strlen(pcurr);
 	memcpy(buf, pcurr, cmd_length);
-	if(TotalReceivedCount > cmd_length + 2 && pnext) { // in case two commands have been received, point to the next command
+	if(TotalReceivedCount > cmd_length + 2
+	    && pnext) { // in case two commands have been received, point to the next command
 		TotalReceivedCount -= (strlen(pcurr) + 2);
 		pcurr = pnext;
-	}
-	else {
+	} else {
 		memset(buffer, 0, BUFFERL_LENGTH);
 		pcurr = buffer;
 		TotalReceivedCount = 0;
@@ -139,7 +141,8 @@ int serial_read_line(char *buf) {
 	return strlen(pcurr);
 }
 
-int serial_read(char *buf, size_t len) {
+int serial_read(char *buf, size_t len)
+{
 	size_t receive_len = len;
 	if(TotalReceivedCount) {
 		if(len == TotalReceivedCount) {
@@ -147,14 +150,12 @@ int serial_read(char *buf, size_t len) {
 			pcurr = buffer;
 			TotalReceivedCount = 0;
 			return len;
-		}
-		else if(len > TotalReceivedCount) {
+		} else if(len > TotalReceivedCount) {
 			memcpy(buf, pcurr, TotalReceivedCount);
 			pcurr = buffer;
 			receive_len -= TotalReceivedCount;
 			TotalReceivedCount = 0;
-		}
-		else { // len < TotalReceivedCount
+		} else { // len < TotalReceivedCount
 			memcpy(buf, pcurr, len);
 			pcurr += len;
 			TotalReceivedCount -= len;
@@ -168,23 +169,26 @@ int serial_read(char *buf, size_t len) {
 	return TotalReceivedCount + receive_len;
 }
 
-int serial_read_line1(char *buf) {
+int serial_read_line1(char *buf)
+{
 	int i = 0;
-	do{
+	do {
 		buf[i] = inbyte();
 		i++;
-	}while(buf[i - 1] != '\n');
+	} while(buf[i - 1] != '\n');
 	buf[i - 2] = '\0';
 	buf[i - 1] = '\0';
 	return i;
 }
 
-int serial_read_nonblocking(char *buf, size_t len) {
+int serial_read_nonblocking(char *buf, size_t len)
+{
 	XUartPs_Recv(&UartPs, (u8*)buf, len);
 	return 0;
 }
 
-int serial_read_wait(size_t len) {
+int serial_read_wait(size_t len)
+{
 	do {
 	} while(!bytes_received_timeout && len != TotalReceivedCount);
 	bytes_received_timeout = false;
@@ -197,7 +201,7 @@ int init_uart(void)
 
 	/* Run the UartPs Interrupt example, specify the the Device ID */
 	Status = UartPsIntrExample(&InterruptController, &UartPs,
-				UART_DEVICE_ID, UART_INT_IRQ_ID);
+				   UART_DEVICE_ID, UART_INT_IRQ_ID);
 	if (Status != XST_SUCCESS) {
 		return XST_FAILURE;
 	}
@@ -206,7 +210,7 @@ int init_uart(void)
 
 
 int UartPsIntrExample(INTC *IntcInstPtr, XUartPs *UartInstPtr,
-			u16 DeviceId, u16 UartIntrId)
+		      u16 DeviceId, u16 UartIntrId)
 {
 	int Status;
 	XUartPs_Config *Config;
@@ -399,7 +403,7 @@ static int SetupInterruptSystem(INTC *IntcInstancePtr,
 	 * specific interrupt processing for the device.
 	 */
 	Status = XIntc_Connect(IntcInstancePtr, UartIntrId,
-		(XInterruptHandler) XUartPs_InterruptHandler, UartInstancePtr);
+			       (XInterruptHandler) XUartPs_InterruptHandler, UartInstancePtr);
 	if (Status != XST_SUCCESS) {
 		return XST_FAILURE;
 	}
@@ -419,7 +423,7 @@ static int SetupInterruptSystem(INTC *IntcInstancePtr,
 	 */
 	XIntc_Enable(IntcInstancePtr, UartIntrId);
 
-	#ifndef TESTAPP_GEN
+#ifndef TESTAPP_GEN
 	/*
 	 * Initialize the exception table.
 	 */
@@ -429,9 +433,9 @@ static int SetupInterruptSystem(INTC *IntcInstancePtr,
 	 * Register the interrupt controller handler with the exception table.
 	 */
 	Xil_ExceptionRegisterHandler(XIL_EXCEPTION_ID_INT,
-				(Xil_ExceptionHandler) XIntc_InterruptHandler,
-				IntcInstancePtr);
-	#endif
+				     (Xil_ExceptionHandler) XIntc_InterruptHandler,
+				     IntcInstancePtr);
+#endif
 #else
 #ifndef TESTAPP_GEN
 	XScuGic_Config *IntcConfig; /* Config for interrupt controller */
@@ -443,7 +447,7 @@ static int SetupInterruptSystem(INTC *IntcInstancePtr,
 	}
 
 	Status = XScuGic_CfgInitialize(IntcInstancePtr, IntcConfig,
-					IntcConfig->CpuBaseAddress);
+				       IntcConfig->CpuBaseAddress);
 	if (Status != XST_SUCCESS) {
 		return XST_FAILURE;
 	}
@@ -453,8 +457,8 @@ static int SetupInterruptSystem(INTC *IntcInstancePtr,
 	 * hardware interrupt handling logic in the processor.
 	 */
 	Xil_ExceptionRegisterHandler(XIL_EXCEPTION_ID_INT,
-				(Xil_ExceptionHandler) XScuGic_InterruptHandler,
-				IntcInstancePtr);
+				     (Xil_ExceptionHandler) XScuGic_InterruptHandler,
+				     IntcInstancePtr);
 #endif
 
 	/*
@@ -463,8 +467,8 @@ static int SetupInterruptSystem(INTC *IntcInstancePtr,
 	 * performs the specific interrupt processing for the device
 	 */
 	Status = XScuGic_Connect(IntcInstancePtr, UartIntrId,
-				  (Xil_ExceptionHandler) XUartPs_InterruptHandler,
-				  (void *) UartInstancePtr);
+				 (Xil_ExceptionHandler) XUartPs_InterruptHandler,
+				 (void *) UartInstancePtr);
 	if (Status != XST_SUCCESS) {
 		return XST_FAILURE;
 	}
@@ -475,7 +479,7 @@ static int SetupInterruptSystem(INTC *IntcInstancePtr,
 #endif
 #ifndef TESTAPP_GEN
 	/* Enable interrupts */
-	 Xil_ExceptionEnable();
+	Xil_ExceptionEnable();
 #endif
 
 	return XST_SUCCESS;
